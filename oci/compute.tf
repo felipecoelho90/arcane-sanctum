@@ -25,6 +25,7 @@ resource "oci_core_instance" "instance" {
     subnet_id        = oci_core_subnet.subnet.id
     display_name     = "primary-vnic-${count.index + 1}"
     assign_public_ip = true
+    hostname_label   = "oci-ubuntu-${format("%02d", count.index + 1)}"
   }
 
   source_details {
@@ -39,4 +40,6 @@ resource "oci_core_instance" "instance" {
       hostname              = "oci-ubuntu-${format("%02d", count.index + 1)}"
     }))
   }
+
+  freeform_tags = local.common_tags
 } 

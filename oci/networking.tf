@@ -4,6 +4,8 @@ resource "oci_core_vcn" "vcn" {
   display_name   = "arcane-sanctum-vcn"
   cidr_block     = "10.0.0.0/16"
   dns_label      = "arcanesanctum"
+
+  freeform_tags = local.common_tags
 }
 
 # Create Internet Gateway
@@ -12,6 +14,8 @@ resource "oci_core_internet_gateway" "internet_gateway" {
   vcn_id         = oci_core_vcn.vcn.id
   display_name   = "arcane-sanctum-igw"
   enabled        = true
+
+  freeform_tags = local.common_tags
 }
 
 # Create Route Table
@@ -25,6 +29,8 @@ resource "oci_core_route_table" "route_table" {
     destination_type  = "CIDR_BLOCK"
     network_entity_id = oci_core_internet_gateway.internet_gateway.id
   }
+
+  freeform_tags = local.common_tags
 }
 
 # Create Subnet
@@ -36,6 +42,8 @@ resource "oci_core_subnet" "subnet" {
   dns_label      = "subnet"
   route_table_id = oci_core_route_table.route_table.id
   security_list_ids = [oci_core_security_list.security_list.id]
+
+  freeform_tags = local.common_tags
 }
 
 # Create Security List
@@ -83,4 +91,6 @@ resource "oci_core_security_list" "security_list" {
     destination = "0.0.0.0/0"
     description = "Allow all outbound traffic"
   }
+
+  freeform_tags = local.common_tags
 } 

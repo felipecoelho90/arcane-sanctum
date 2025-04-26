@@ -15,9 +15,19 @@ provider "oci" {
   region           = var.region
 }
 
+locals {
+  common_tags = {
+    Project     = "arcane-sanctum"
+    Environment = "production"
+    ManagedBy   = "terraform"
+  }
+}
+
 # Create a compartment
 resource "oci_identity_compartment" "arcane_sanctum" {
   name          = "arcane-sanctum"
   description   = "Compartment for Arcane Sanctum resources"
   enable_delete = true
+
+  freeform_tags = local.common_tags
 } 

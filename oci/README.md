@@ -5,7 +5,7 @@ This directory contains Terraform configurations to deploy a free tier virtual m
 ## Infrastructure Overview
 
 The infrastructure includes:
-- A compartment named "arcane-sanctum"
+- A compartment named "arcane-sanctum" with proper tagging
 - A Virtual Cloud Network (VCN) with a subnet
 - An Internet Gateway for internet access
 - A route table for routing traffic
@@ -16,6 +16,7 @@ The infrastructure includes:
 - Ubuntu 22.04 LTS as the operating system
 - Docker and Docker Compose installed via cloud-init
 - A dedicated docker user with sudo privileges
+- Proper resource tagging for cost tracking and management
 
 ## Prerequisites
 
@@ -28,7 +29,7 @@ The infrastructure includes:
 
 ```
 oci/
-├── main.tf           # Provider configuration and compartment
+├── main.tf           # Provider configuration, compartment, and common tags
 ├── variables.tf      # Variable definitions
 ├── networking.tf     # Network infrastructure (VCN, Subnet, etc.)
 ├── compute.tf        # VM instance configuration
@@ -37,6 +38,19 @@ oci/
 ├── cloud-init-docker.yaml # Cloud-init configuration for Docker setup
 └── terraform.tfvars  # Your OCI credentials (not in version control)
 ```
+
+## Resource Tagging
+
+All resources are tagged with:
+- Project: "arcane-sanctum"
+- Environment: "production"
+- ManagedBy: "terraform"
+
+These tags help with:
+- Cost tracking
+- Resource organization
+- Access control
+- Automation
 
 ## Setup Instructions
 
@@ -123,6 +137,7 @@ After deployment, you can:
   - Docker and Docker Compose installed
   - A docker user with sudo privileges
   - Hostname matching the VM name (oci-ubuntu-XX)
+  - Proper DNS resolution with hostname_label
 
 ## Security Notes
 
@@ -130,6 +145,7 @@ After deployment, you can:
 - HTTP and HTTPS are accessible from anywhere
 - The VM is assigned a public IP address
 - Make sure to keep your private keys secure and never commit them to version control
+- All resources are properly tagged for security and compliance
 
 ## Cleanup
 

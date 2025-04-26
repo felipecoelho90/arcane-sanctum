@@ -1,0 +1,27 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+# Set hostname
+hostname: ${hostname}
+fqdn: ${hostname}
+
+users:
+  - name: docker
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_public_key_content}
+
+# Lazy install docker
+runcmd:
+  - curl -fsSL https://get.docker.com | sh
+  - usermod -aG docker docker
+  - systemctl enable docker
+  - systemctl start docker
+  # Install Docker Compose
+  - curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  - chmod +x /usr/local/bin/docker-compose
+  - ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+  # Capture cloud-init output
+  - cloud-init status --wait > /var/log/cloud-init-output.log

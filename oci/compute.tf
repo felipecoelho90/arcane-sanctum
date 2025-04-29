@@ -38,7 +38,7 @@ resource "oci_core_instance" "instance" {
     ssh_authorized_keys      = var.ssh_public_key_content
     user_data                = base64encode(templatefile("${path.module}/cloud-init-docker.yaml", {
       ssh_public_key_content = var.ssh_public_key_content
-      hostname               = "${var.project_name}-vm-${format("%02d", count.index + 1)}"
+      hostname               = "${var.vm_name_prefix}-${format("%02d", count.index + 1)}"
     }))
   }
 

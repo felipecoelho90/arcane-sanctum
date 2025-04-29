@@ -27,3 +27,9 @@ runcmd:
   - curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   - chmod +x /usr/local/bin/docker-compose
   - ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+  - mkdir -p /home/docker/git
+  - chown -R docker:docker /home/docker/git
+  - chmod -R 755 /home/docker/git
+  - mkdir -p /mnt/docker-data
+  - chown -R docker:docker /mnt/docker-data
+  - chmod -R 755 /mnt/docker-data

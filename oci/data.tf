@@ -1,15 +1,15 @@
-# Get Ubuntu image
+# Availability Domains
+data "oci_identity_availability_domains" "ads" {
+  compartment_id = var.tenancy_ocid
+}
+
+# Ubuntu Image
 data "oci_core_images" "ubuntu" {
-  compartment_id           = oci_identity_compartment.arcane_sanctum.id
-  operating_system         = "Canonical Ubuntu"
-  operating_system_version = "24.04 Minimal"
-  shape                   = "VM.Standard.E2.1.Micro"
+  compartment_id           = oci_identity_compartment.project.id
+  operating_system         = var.operating_system
+  operating_system_version = var.operating_system_version
+  shape                   = var.vm_shape
   state                   = "AVAILABLE"
   sort_by                 = "TIMECREATED"
   sort_order              = "DESC"
-}
-
-# Get availability domains
-data "oci_identity_availability_domains" "ads" {
-  compartment_id = var.tenancy_ocid
 } 

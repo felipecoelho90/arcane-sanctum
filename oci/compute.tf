@@ -1,20 +1,21 @@
+# VM Configuration
 locals {
   vm_config = {
-    shape = "VM.Standard.E2.1.Micro"  # Always Free shape
+    shape = var.vm_shape
     shape_config = {
-      ocpus         = 1
-      memory_in_gbs = 1
+      ocpus         = var.vm_ocpus
+      memory_in_gbs = var.vm_memory_in_gbs
     }
   }
 }
 
-# Create VM Instances
+# VM Instances
 resource "oci_core_instance" "instance" {
-  count               = 1
-  compartment_id      = oci_identity_compartment.arcane_sanctum.id
+  count               = var.vm_count
+  compartment_id      = oci_identity_compartment.project.id
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
   shape               = local.vm_config.shape
-  display_name        = "oci-ubuntu-${format("%02d", count.index + 1)}"
+  display_name        = "${var.project_name}-vm-${format("%02d", count.index + 1)}"
 
   shape_config {
     ocpus         = local.vm_config.shape_config.ocpus
@@ -25,7 +26,7 @@ resource "oci_core_instance" "instance" {
     subnet_id        = oci_core_subnet.subnet.id
     display_name     = "primary-vnic-${count.index + 1}"
     assign_public_ip = true
-    hostname_label   = "oci-ubuntu-${format("%02d", count.index + 1)}"
+    hostname_label   = "${var.project_name}-vm-${format("%02d", count.index + 1)}"
   }
 
   source_details {
@@ -37,7 +38,7 @@ resource "oci_core_instance" "instance" {
     ssh_authorized_keys = var.ssh_public_key_content
     user_data          = base64encode(templatefile("${path.module}/cloud-init-docker.yaml", {
       ssh_public_key_content = var.ssh_public_key_content
-      hostname              = "oci-ubuntu-${format("%02d", count.index + 1)}"
+      hostname              = "${var.project_name}-vm-${format("%02d", count.index + 1)}"
     }))
   }
 

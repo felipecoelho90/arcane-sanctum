@@ -1,3 +1,4 @@
+# Provider Configuration
 terraform {
   required_providers {
     oci = {
@@ -15,18 +16,19 @@ provider "oci" {
   region           = var.region
 }
 
+# Common Configuration
 locals {
   common_tags = {
-    Project     = "arcane-sanctum"
-    Environment = "production"
+    Project     = var.project_name
+    Environment = var.environment
     ManagedBy   = "terraform"
   }
 }
 
-# Create a compartment
-resource "oci_identity_compartment" "arcane_sanctum" {
-  name          = "arcane-sanctum"
-  description   = "Compartment for Arcane Sanctum resources"
+# Compartment
+resource "oci_identity_compartment" "project" {
+  name          = var.project_name
+  description   = "Compartment for ${var.project_name} resources"
   enable_delete = true
 
   freeform_tags = local.common_tags

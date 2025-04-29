@@ -10,10 +10,10 @@ The infrastructure includes:
 - An Internet Gateway for internet access
 - A route table for routing traffic
 - A security list allowing:
-  - SSH (22) access from a specific IP address
-  - HTTP (80) and HTTPS (443) access from anywhere
+  - SSH (22) access from specific IP addresses with descriptive names
+  - HTTPS (443) access from anywhere
 - A VM instance using the always-free shape (VM.Standard.E2.1.Micro)
-- Ubuntu 22.04 LTS as the operating system
+- Ubuntu 24.04 Minimal LTS as the operating system
 - Docker and Docker Compose installed via cloud-init
 - A dedicated docker user with sudo privileges
 - Proper resource tagging for cost tracking and management
@@ -33,8 +33,8 @@ oci/
 ├── variables.tf      # Variable definitions
 ├── networking.tf     # Network infrastructure (VCN, Subnet, etc.)
 ├── compute.tf        # VM instance configuration
-├── data.tf          # Data sources (Ubuntu image, availability domains)
-├── outputs.tf       # Output definitions
+├── data.tf           # Data sources (Ubuntu image, availability domains)
+├── outputs.tf        # Output definitions
 ├── cloud-init-docker.yaml # Cloud-init configuration for Docker setup
 └── terraform.tfvars  # Your OCI credentials (not in version control)
 ```
@@ -105,7 +105,12 @@ fingerprint         = "your_api_key_fingerprint"
 private_key_path    = "~/.oci/oci_api_key.pem"
 region              = "eu-amsterdam-1"
 ssh_public_key_content = "ssh-rsa AAAA... your_public_key_content_here ..."
-allowed_ip          = "your.ip.address.here"
+
+# Map of IP addresses to their descriptions for SSH access
+allowed_ips = {
+  "your.ip.address.1" = "Home Office"
+  "your.ip.address.2" = "Work Office"
+}
 ```
 
 ### 4. Deployment
@@ -141,8 +146,8 @@ After deployment, you can:
 
 ## Security Notes
 
-- SSH access is restricted to your specified IP address
-- HTTP and HTTPS are accessible from anywhere
+- SSH access is restricted to specific IP addresses with descriptive names
+- HTTPS is accessible from anywhere
 - The VM is assigned a public IP address
 - Make sure to keep your private keys secure and never commit them to version control
 - All resources are properly tagged for security and compliance

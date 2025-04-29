@@ -1,0 +1,28 @@
+---
+- name: Deploy FreshRSS
+  hosts: all
+  become: true
+  roles:
+    - freshrss
+
+  tasks:
+    - name: Create application directory
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Clone FreshRSS repository
+      git:
+        repo: "{{ git_repo }}"
+        dest: "{{ app_dir }}"
+        version: master
+        force: yes
+
+    - name: Include common tasks
+      include_tasks: tasks.yml
+      with_items:
+        - Install OCI CLI
+        - Download backup from OCI
+        - Extract backup
+        - Start Docker Compose 

@@ -1,0 +1,23 @@
+---
+- name: Backup FreshRSS
+  hosts: all
+  become: true
+  roles:
+    - freshrss
+
+  tasks:
+    - name: Create backup directory
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Include common tasks
+      include_tasks: tasks.yml
+      with_items:
+        - Stop Docker Compose
+        - Create backup archive
+        - Install OCI CLI
+        - Upload backup to OCI
+        - Clean up old backups
+        - Start Docker Compose 

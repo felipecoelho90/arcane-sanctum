@@ -1,0 +1,56 @@
+---
+# Backup tasks for FreshRSS
+
+- name: Create backup directory
+  file:
+    path: "{{ backup_dir }}"
+    state: directory
+    mode: '0755'
+  register: dir_create
+  failed_when: dir_create.rc != 0
+
+- name: Create backup archive
+  archive:
+    path: "{{ app_dir }}/data"
+    dest: "{{ backup_dir }}/{{ backup_filename }}"
+    format: gz
+    remove: no
+  register: backup_create
+  failed_when: backup_create.rc != 0
+
+- name: Verify backup archive
+  stat:
+    path: "{{ backup_dir }}/{{ backup_filename }}"
+  register: backup_stat
+  failed_when: not backup_stat.stat.exists
+
+- name: Upload backup to OCI
+  shell: |
+    oci os object put \
+      --bucket-name {{ backup_bucket }} \
+      --name {{ backup_filename }} \
+      --file {{ backup_dir }}/{{ backup_filename }}
+  args:
+    creates: "{{ backup_dir }}/{{ backup_filename }}"
+  register: backup_upload
+  failed_when: backup_upload.rc != 0
+  when: backup_stat.stat.exists
+
+- name: Verify backup upload
+  shell: |
+    oci os object head \
+      --bucket-name {{ backup_bucket }} \
+      --name {{ backup_filename }}
+  register: backup_verify
+  failed_when: backup_verify.rc != 0
+  when: backup_stat.stat.exists
+
+- name: Clean up old backups
+  file:
+    path: "{{ backup_dir }}/{{ item }}"
+    state: absent
+  with_fileglob:
+    - "{{ backup_dir }}/freshrss-backup-*.tar.gz"
+  when: item != backup_filename
+  register: cleanup_result
+  failed_when: cleanup_result.rc != 0 

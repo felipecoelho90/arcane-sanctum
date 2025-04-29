@@ -1,0 +1,34 @@
+---
+- name: Update FreshRSS
+  hosts: all
+  become: true
+  roles:
+    - freshrss
+
+  tasks:
+    - name: Include common tasks
+      include_tasks: tasks.yml
+      with_items:
+        - Stop Docker Compose
+        - Update apt cache
+        - Upgrade all packages
+        - Reboot and wait
+        - Start Docker Compose
+
+    - name: Update Docker images
+      docker_compose:
+        project_src: "{{ app_dir }}"
+        pull: yes
+        build: no
+
+    - name: Reboot the server
+      reboot: "{{ reboot_config }}"
+
+    - name: Wait for server to come back
+      wait_for_connection:
+        delay: 30
+        timeout: 300
+
+    - name: Start Docker Compose
+      docker_compose:
+        "{{ docker_compose_config }}" 

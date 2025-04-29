@@ -1,0 +1,47 @@
+---
+# Deploy tasks for FreshRSS
+
+- name: Create application directory
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    mode: '0755'
+  register: dir_create
+  failed_when: dir_create.rc != 0
+
+- name: Clone FreshRSS repository
+  git:
+    repo: "{{ git_repo }}"
+    dest: "{{ app_dir }}"
+    version: master
+    force: yes
+  register: git_clone
+  failed_when: git_clone.rc != 0
+
+- name: Download backup from OCI
+  shell: |
+    oci os object get \
+      --bucket-name {{ backup_bucket }} \
+      --name {{ backup_file }} \
+      --file {{ app_dir }}/{{ backup_file }}
+  args:
+    creates: "{{ app_dir }}/{{ backup_file }}"
+  register: backup_download
+  failed_when: backup_download.rc != 0
+  when: backup_file is defined
+
+- name: Validate backup file
+  stat:
+    path: "{{ app_dir }}/{{ backup_file }}"
+  register: backup_stat
+  failed_when: not backup_stat.stat.exists
+  when: backup_file is defined
+
+- name: Extract backup
+  unarchive:
+    src: "{{ app_dir }}/{{ backup_file }}"
+    dest: "{{ app_dir }}"
+    remote_src: yes
+  register: backup_extract
+  failed_when: backup_extract.rc != 0
+  when: backup_file is defined and backup_stat.stat.exists 

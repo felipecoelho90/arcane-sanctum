@@ -1,0 +1,21 @@
+---
+# Post-tasks for FreshRSS role
+
+- name: Clean up temporary files
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - "{{ app_dir }}/{{ backup_file }}"
+    - "{{ backup_dir }}/temp"
+  when: item is defined
+
+- name: Verify Docker Compose status
+  command: docker-compose -f {{ app_dir }}/docker-compose.yml ps
+  register: docker_status
+  changed_when: false
+  failed_when: docker_status.rc != 0
+
+- name: Display deployment summary
+  debug:
+    msg: "FreshRSS deployment completed successfully. Docker Compose status: {{ docker_status.stdout }}" 

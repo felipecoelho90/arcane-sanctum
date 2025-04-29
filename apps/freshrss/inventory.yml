@@ -1,0 +1,16 @@
+---
+# Inventory for FreshRSS deployment
+
+all:
+  children:
+    freshrss:
+      hosts:
+        freshrss:
+          ansible_host: "{{ lookup('env', 'FRESHRSS_HOST') | default('localhost', true) }}"
+          ansible_user: "{{ lookup('env', 'FRESHRSS_USER') | default('ubuntu', true) }}"
+          ansible_ssh_private_key_file: "{{ lookup('env', 'FRESHRSS_SSH_KEY') | default('~/.ssh/id_rsa', true) }}"
+          ansible_python_interpreter: /usr/bin/python3
+          # Application specific variables
+          app_dir: /opt/freshrss
+          backup_bucket: freshrss-backups
+          timezone: Europe/Amsterdam 

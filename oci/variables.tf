@@ -7,7 +7,7 @@ variable "project_name" {
 variable "environment" {
   description = "Environment name (e.g., dev, prod)"
   type        = string
-  default     = "production"
+  default     = "development"
 }
 
 # OCI Credentials
@@ -34,7 +34,6 @@ variable "private_key_path" {
 variable "region" {
   description = "OCI region"
   type        = string
-  default     = "eu-amsterdam-1"
 }
 
 # Network Configuration
@@ -54,7 +53,6 @@ variable "subnet_cidr" {
 variable "vm_count" {
   description = "Number of VMs to create"
   type        = number
-  default     = 1
 }
 
 variable "vm_shape" {
@@ -73,6 +71,11 @@ variable "vm_memory_in_gbs" {
   description = "Amount of memory in GBs for the VM"
   type        = number
   default     = 1
+}
+
+variable "vm_name_prefix" {
+  description = "Base name for the VM instances"
+  type        = string
 }
 
 # Operating System

@@ -15,7 +15,7 @@ resource "oci_core_instance" "instance" {
   compartment_id      = oci_identity_compartment.project.id
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
   shape               = local.vm_config.shape
-  display_name        = "${var.project_name}-vm-${format("%02d", count.index + 1)}"
+  display_name        = "${var.vm_name_prefix}-${format("%02d", count.index + 1)}"
 
   shape_config {
     ocpus         = local.vm_config.shape_config.ocpus
@@ -26,7 +26,7 @@ resource "oci_core_instance" "instance" {
     subnet_id        = oci_core_subnet.subnet.id
     display_name     = "primary-vnic-${count.index + 1}"
     assign_public_ip = true
-    hostname_label   = "${var.project_name}-vm-${format("%02d", count.index + 1)}"
+    hostname_label   = "${var.vm_name_prefix}-${format("%02d", count.index + 1)}"
   }
 
   source_details {
@@ -35,10 +35,10 @@ resource "oci_core_instance" "instance" {
   }
 
   metadata = {
-    ssh_authorized_keys = var.ssh_public_key_content
-    user_data          = base64encode(templatefile("${path.module}/cloud-init-docker.yaml", {
+    ssh_authorized_keys      = var.ssh_public_key_content
+    user_data                = base64encode(templatefile("${path.module}/cloud-init-docker.yaml", {
       ssh_public_key_content = var.ssh_public_key_content
-      hostname              = "${var.project_name}-vm-${format("%02d", count.index + 1)}"
+      hostname               = "${var.project_name}-vm-${format("%02d", count.index + 1)}"
     }))
   }
 

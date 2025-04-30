@@ -2,7 +2,7 @@
 # Default variables for FreshRSS role
 
 # Application Configuration
-app_dir: /opt/freshrss
+app_dir: /mnt/docker-data/freshrss
 git_repo: "https://github.com/FreshRSS/FreshRSS.git"
 backup_dir: "{{ app_dir }}/backups"
 

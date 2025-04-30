@@ -10,15 +10,16 @@
   failed_when: oci_install.rc != 0
 
 - name: Stop Docker Compose
-  docker_compose:
-    project_src: "{{ app_dir }}"
+  community.docker.docker_compose_v2:
+    project_src: "{{ config_dir }}"
     state: absent
   register: docker_stop
   failed_when: docker_stop.rc != 0
 
 - name: Start Docker Compose
-  docker_compose:
-    "{{ docker_compose_config }}"
+  community.docker.docker_compose_v2:
+    project_src: "{{ config_dir }}"
+    state: present
   register: docker_start
   failed_when: docker_start.rc != 0
 

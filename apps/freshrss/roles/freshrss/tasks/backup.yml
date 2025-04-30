@@ -9,48 +9,76 @@
   register: dir_create
   failed_when: dir_create.rc != 0
 
-- name: Create backup archive
+- name: Create backup archive for data
   archive:
-    path: "{{ app_dir }}/data"
-    dest: "{{ backup_dir }}/{{ backup_filename }}"
+    path: "{{ data_dir }}"
+    dest: "{{ backup_dir }}/data-{{ backup_filename }}"
     format: gz
     remove: no
-  register: backup_create
-  failed_when: backup_create.rc != 0
+  register: data_backup_create
+  failed_when: data_backup_create.rc != 0
 
-- name: Verify backup archive
+- name: Create backup archive for configuration
+  archive:
+    path: "{{ config_dir }}/docker-compose.yml"
+    dest: "{{ backup_dir }}/config-{{ backup_filename }}"
+    format: gz
+    remove: no
+  register: config_backup_create
+  failed_when: config_backup_create.rc != 0
+
+- name: Verify backup archives
   stat:
-    path: "{{ backup_dir }}/{{ backup_filename }}"
+    path: "{{ item }}"
+  with_items:
+    - "{{ backup_dir }}/data-{{ backup_filename }}"
+    - "{{ backup_dir }}/config-{{ backup_filename }}"
   register: backup_stat
-  failed_when: not backup_stat.stat.exists
+  failed_when: not backup_stat.results[0].stat.exists or not backup_stat.results[1].stat.exists
 
-- name: Upload backup to OCI
+- name: Upload data backup to OCI
   shell: |
     oci os object put \
       --bucket-name {{ backup_bucket }} \
-      --name {{ backup_filename }} \
-      --file {{ backup_dir }}/{{ backup_filename }}
+      --name data-{{ backup_filename }} \
+      --file {{ backup_dir }}/data-{{ backup_filename }}
   args:
-    creates: "{{ backup_dir }}/{{ backup_filename }}"
-  register: backup_upload
-  failed_when: backup_upload.rc != 0
-  when: backup_stat.stat.exists
+    creates: "{{ backup_dir }}/data-{{ backup_filename }}"
+  register: data_backup_upload
+  failed_when: data_backup_upload.rc != 0
+  when: backup_stat.results[0].stat.exists
 
-- name: Verify backup upload
+- name: Upload config backup to OCI
+  shell: |
+    oci os object put \
+      --bucket-name {{ backup_bucket }} \
+      --name config-{{ backup_filename }} \
+      --file {{ backup_dir }}/config-{{ backup_filename }}"
+  args:
+    creates: "{{ backup_dir }}/config-{{ backup_filename }}"
+  register: config_backup_upload
+  failed_when: config_backup_upload.rc != 0
+  when: backup_stat.results[1].stat.exists
+
+- name: Verify backup uploads
   shell: |
     oci os object head \
       --bucket-name {{ backup_bucket }} \
-      --name {{ backup_filename }}
+      --name {{ item }}
+  with_items:
+    - "data-{{ backup_filename }}"
+    - "config-{{ backup_filename }}"
   register: backup_verify
   failed_when: backup_verify.rc != 0
-  when: backup_stat.stat.exists
+  when: backup_stat.results[0].stat.exists and backup_stat.results[1].stat.exists
 
 - name: Clean up old backups
   file:
     path: "{{ backup_dir }}/{{ item }}"
     state: absent
   with_fileglob:
-    - "{{ backup_dir }}/freshrss-backup-*.tar.gz"
-  when: item != backup_filename
+    - "{{ backup_dir }}/data-freshrss-backup-*.tar.gz"
+    - "{{ backup_dir }}/config-freshrss-backup-*.tar.gz"
+  when: item != "data-{{ backup_filename }}" and item != "config-{{ backup_filename }}"
   register: cleanup_result
   failed_when: cleanup_result.rc != 0 

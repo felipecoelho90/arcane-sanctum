@@ -107,4 +107,17 @@ variable "enable_https" {
   description = "Whether to enable HTTPS access"
   type        = bool
   default     = true
-} 
+}
+
+# Object Storage Configuration
+variable "bucket_access_type" {
+  description = "Access type for the bucket (NoPublicAccess, ObjectRead, ObjectReadWrite)"
+  type        = string
+  default     = "NoPublicAccess"
+}
+
+variable "vm_user_email_domain" {
+  description = "Email domain to use for VM users"
+  type        = string
+  default     = "example.com"
+}

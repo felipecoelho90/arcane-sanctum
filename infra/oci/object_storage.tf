@@ -3,7 +3,7 @@ resource "oci_objectstorage_bucket" "bucket" {
   compartment_id = oci_identity_compartment.project.id
   name           = var.project_name
   access_type    = "NoPublicAccess"
-  versioning     = "Enabled"
+  versioning     = "Disabled"
   namespace      = data.oci_objectstorage_namespace.ns.namespace
 }
 

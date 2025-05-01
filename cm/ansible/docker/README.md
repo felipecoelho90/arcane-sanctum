@@ -31,23 +31,52 @@ openssl rsa -pubout -in ~/.oci/oci_api_key.pem -out ~/.oci/oci_api_key_public.pe
 
 ## Usage
 
-### Stop and Backup
+### Backup Projects
 ```bash
-ansible-playbook stop.yml -i inventory.yaml
+# Run with Python environment setup (default)
+ansible-playbook backup.yml
+
+# Skip Python environment setup
+ansible-playbook backup.yml -e setup_python_env=false
 ```
 
 This playbook will:
-1. Stop the Docker containers
-2. Create a backup of the data directory
-3. Upload the backup to OCI bucket
-4. Start the containers again
+1. Create a Python virtual environment and install OCI SDK (unless skipped)
+2. For each project in the inventory:
+   - Stop the Docker containers
+   - Create a backup of the data directory
+   - Start the containers again
+   - Upload the backup to OCI bucket
+   - Remove the local backup file
 
-## Variables
+## Inventory Structure
 
-Required variables in `inventory.yaml`:
-- `config_dir`: Path to the Docker Compose project
-- `data_dir`: Path to the data directory to backup
+The inventory is organized in a directory structure:
+
+```
+inventory/
+├── hosts                    # Host definitions
+├── group_vars/
+│   └── all/
+│       └── main.yml        # Common variables for all hosts
+└── host_vars/
+    └── oci-ubuntu-01.yml   # Host-specific variables and projects
+```
+
+### Variables
+
+#### Common Variables (group_vars/all/main.yml)
 - `backup_dir`: Path where backups are stored
+- `venv_path`: Path for Python virtual environment
 - `oci_config_file`: Path to OCI config file
 - `oci_bucket_name`: Name of the OCI bucket
-- `oci_namespace`: Your OCI namespace 
+- `oci_namespace`: Your OCI namespace
+
+#### Host Variables (host_vars/oci-ubuntu-01.yml)
+Each host can have multiple projects with:
+- `name`: Project name (used in backup filename)
+- `config_dir`: Path to the Docker Compose project
+- `data_dir`: Path to the data directory to backup
+
+### Playbook Variables
+- `setup_python_env`: Set to `false` to skip Python environment setup (default: `true`) 

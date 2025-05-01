@@ -1,0 +1,9 @@
+---
+# Project configurations for oci-ubuntu-01
+projects:
+  - name: freshrss
+    config_dir: /home/docker/git/freshrss
+    data_dir: /mnt/docker-data/freshrss
+  - name: tandoor
+    config_dir: /home/docker/git/tandoor
+    data_dir: /mnt/docker-data/tandoor 

@@ -1,0 +1,11 @@
+---
+# Common variables for all hosts
+backup_dir: /mnt/docker-data
+
+# Python virtual environment
+venv_path: "/opt/ansible-venv"
+
+# OCI Configuration
+oci_config_file: ~/.oci/config
+oci_bucket_name: arcane-sanctum
+oci_namespace: ax8wbes07zqc 

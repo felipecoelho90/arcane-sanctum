@@ -1,0 +1,5 @@
+---
+# Common variables for all hosts
+config_dir: /home/docker/git/freshrss
+data_dir: /mnt/docker-data/freshrss
+backup_dir: /mnt/docker-data

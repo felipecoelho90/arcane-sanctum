@@ -16,6 +16,9 @@ users:
 packages:
 - apt-utils
 - vim
+- python3
+- python3-pip
+- python3-venv
 
 # Lazy install docker
 runcmd:

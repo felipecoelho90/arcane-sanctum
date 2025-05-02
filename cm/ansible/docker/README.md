@@ -1,82 +1,95 @@
-# Docker Management Playbooks
+# Docker Project Management
 
-This directory contains Ansible playbooks for managing Docker containers and backups.
+This directory contains Ansible playbooks for managing Docker projects on remote servers.
 
-## Dependencies
+## Directory Structure
 
-### Ansible Collections
-```bash
-# Install required collections
-ansible-galaxy collection install community.docker
-ansible-galaxy collection install oracle.oci
+```
+.
+├── inventory/              # Ansible inventory files
+│   ├── hosts.yaml         # Host definitions
+│   ├── group_vars/        # Group variables
+│   └── host_vars/         # Host-specific variables
+├── templates/             # Jinja2 templates
+│   ├── oci_config.j2     # OCI configuration template
+│   └── arcane-sanctum.pem.j2  # OCI private key template
+├── .env                   # Environment variables for OCI
+├── setup_oci.yml         # Playbook for OCI setup
+├── backup.yml            # Playbook for project backups
+├── backup_project.yml    # Playbook for individual project backup
+└── run_setup.sh          # Helper script for OCI setup
 ```
 
-### OCI Configuration
-1. Create OCI config file at `~/.oci/config` with your credentials:
-```ini
-[DEFAULT]
-user=ocid1.user.oc1..your_user_ocid
-fingerprint=your_api_key_fingerprint
-tenancy=ocid1.tenancy.oc1..your_tenancy_ocid
-region=eu-amsterdam-1
-key_file=~/.oci/oci_api_key.pem
-```
+## Prerequisites
 
-2. Generate API key pair:
-```bash
-openssl genrsa -out ~/.oci/oci_api_key.pem 2048
-chmod 600 ~/.oci/oci_api_key.pem
-openssl rsa -pubout -in ~/.oci/oci_api_key.pem -out ~/.oci/oci_api_key_public.pem
-```
+1. Ansible installed on your local machine
+2. SSH access to the target servers
+3. OCI (Oracle Cloud Infrastructure) account and credentials
+
+## Environment Setup
+
+1. Create a `.env` file with your OCI credentials:
+   ```
+   OCI_USER=your_user_ocid
+   OCI_FINGERPRINT=your_key_fingerprint
+   OCI_TENANCY=your_tenancy_ocid
+   OCI_REGION=your_region
+   OCI_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+   ```
+
+2. Make the setup script executable:
+   ```bash
+   chmod +x run_setup.sh
+   ```
 
 ## Usage
 
-### Backup Projects
+### Setting up OCI Configuration
+
+To set up OCI configuration on the target servers:
+
 ```bash
-# Run with Python environment setup (default)
-ansible-playbook backup.yml
-
-# Skip Python environment setup
-ansible-playbook backup.yml -e setup_python_env=false
+./run_setup.sh
 ```
 
-This playbook will:
-1. Create a Python virtual environment and install OCI SDK (unless skipped)
-2. For each project in the inventory:
-   - Stop the Docker containers
-   - Create a backup of the data directory
-   - Start the containers again
-   - Upload the backup to OCI bucket
-   - Remove the local backup file
+This will:
+- Create the `.oci` directory
+- Set up the OCI configuration file
+- Create the private key file
+- Install the OCI Python SDK
 
-## Inventory Structure
+### Backing up Projects
 
-The inventory is organized in a directory structure:
+To back up all configured projects:
 
-```
-inventory/
-├── hosts                    # Host definitions
-├── group_vars/
-│   └── all/
-│       └── main.yml        # Common variables for all hosts
-└── host_vars/
-    └── oci-ubuntu-01.yml   # Host-specific variables and projects
+```bash
+ansible-playbook -i inventory/hosts.yaml backup.yml
 ```
 
-### Variables
+The backup process:
+1. Stops the project's containers
+2. Creates a backup of the project's data directory
+3. Starts the containers again
+4. Uploads the backup to an OCI bucket
+5. Removes the local backup file
 
-#### Common Variables (group_vars/all/main.yml)
-- `backup_dir`: Path where backups are stored
-- `venv_path`: Path for Python virtual environment
-- `oci_config_file`: Path to OCI config file
-- `oci_bucket_name`: Name of the OCI bucket
-- `oci_namespace`: Your OCI namespace
+## Project Configuration
 
-#### Host Variables (host_vars/oci-ubuntu-01.yml)
-Each host can have multiple projects with:
-- `name`: Project name (used in backup filename)
-- `config_dir`: Path to the Docker Compose project
-- `data_dir`: Path to the data directory to backup
+Projects are configured in the inventory files. Each project should have:
+- A name
+- A configuration directory
+- A data directory
 
-### Playbook Variables
-- `setup_python_env`: Set to `false` to skip Python environment setup (default: `true`) 
+Example project configuration in `inventory/hosts.yaml`:
+```yaml
+projects:
+  - name: tandoor
+    config_dir: /home/docker/git/tandoor
+    data_dir: /mnt/docker-data/tandoor
+```
+
+## Security Notes
+
+- The `.env` file contains sensitive information and should not be committed to version control
+- The OCI private key file is created with restricted permissions (600)
+- The `.oci` directory is created with restricted permissions (700) 

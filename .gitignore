@@ -26,13 +26,48 @@ terraform.rc
 # Ignore lock files
 .terraform.lock.hcl
 
-# Ignore OCI API keys
+# Ignore OCI API keys and configuration
 *.pem
 *.key
+.oci/
+.env
 
 # Ignore SSH keys
 id_rsa
 id_rsa.pub
 
 # Ignore macOS system files
-.DS_Store 
+.DS_Store
+
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+
+# Ansible
+*.retry
+*.log
+
+# Backup files
+*.tar.gz
+*.tar
+*.gz
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Logs
+logs/
+*.log.*
+
+# Local development
+local_settings.py
+local.env 

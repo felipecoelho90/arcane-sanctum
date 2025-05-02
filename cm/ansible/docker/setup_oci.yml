@@ -4,11 +4,19 @@
 - name: Setup OCI CLI
   hosts: all
   vars:
-    setup_python_env: true  # Set to false to skip Python environment setup
+    setup_python_env: true
     oci_config_dir: "{{ ansible_env.HOME }}/.oci"
     oci_config_file: "{{ oci_config_dir }}/config"
     oci_key_file: "{{ oci_config_dir }}/arcane-sanctum.pem"
   tasks:
+    - name: Set OCI variables from environment
+      ansible.builtin.set_fact:
+        oci_user: "{{ lookup('env', 'OCI_USER') }}"
+        oci_fingerprint: "{{ lookup('env', 'OCI_FINGERPRINT') }}"
+        oci_tenancy: "{{ lookup('env', 'OCI_TENANCY') }}"
+        oci_region: "{{ lookup('env', 'OCI_REGION') }}"
+        oci_private_key: "{{ lookup('env', 'OCI_PRIVATE_KEY') }}"
+
     - name: Create .oci directory
       ansible.builtin.file:
         path: "{{ oci_config_dir }}"
@@ -20,14 +28,14 @@
         src: templates/oci_config.j2
         dest: "{{ oci_config_file }}"
         mode: '0600'
-      when: not ansible_check_mode 
+      when: not ansible_check_mode
 
     - name: Create pem config file
       ansible.builtin.template:
         src: templates/arcane-sanctum.pem.j2
         dest: "{{ oci_key_file }}"
         mode: '0600'
-      when: not ansible_check_mode 
+      when: not ansible_check_mode
 
     - name: Create Python virtual environment
       ansible.builtin.command:

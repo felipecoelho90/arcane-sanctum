@@ -6,19 +6,6 @@
   vars:
     setup_python_env: true  # Set to false to skip Python environment setup
   tasks:
-    - name: Create Python virtual environment
-      ansible.builtin.command:
-        cmd: python3 -m venv {{ venv_path }}
-        creates: "{{ venv_path }}"
-      when: setup_python_env
-
-    - name: Install OCI Python SDK in virtual environment
-      ansible.builtin.pip:
-        name: oci
-        state: present
-        executable: "{{ venv_path }}/bin/pip"
-      when: setup_python_env
-
     - name: Backup each project
       ansible.builtin.include_tasks: backup_project.yml
       loop: "{{ projects }}"

@@ -20,24 +20,32 @@
     state: present
   register: project_info
 
-- name: Upload backup to OCI bucket for project {{ project_name }}
-  oracle.oci.oci_object_storage_object:
-    config_file_location: "{{ oci_config_file }}"
-    bucket_name: "{{ oci_bucket_name }}"
-    namespace_name: "{{ oci_namespace }}"
-    object_name: "backups/{{ project_name }}/{{ backup_result.dest | basename }}"
-    src: "{{ backup_result.dest }}"
-    state: present
-  environment:
-    PATH: "{{ venv_path }}/bin:{{ ansible_env.PATH }}"
-    PYTHONPATH: "{{ venv_path }}/lib/python3/dist-packages:{{ ansible_env.PYTHONPATH | default('') }}"
-    VIRTUAL_ENV: "{{ venv_path }}"
-  vars:
-    ansible_python_interpreter: "{{ venv_path }}/bin/python"
-  register: upload_result
+- name: Backup and upload process
+  block:
+    - name: Upload backup to OCI bucket for project {{ project_name }}
+      oracle.oci.oci_object_storage_object:
+        config_file_location: "{{ oci_config_file }}"
+        bucket_name: "{{ oci_bucket_name }}"
+        namespace_name: "{{ oci_namespace }}"
+        object_name: "backups/{{ project_name }}/{{ backup_result.dest | basename }}"
+        src: "{{ backup_result.dest }}"
+        state: present
+      environment:
+        PATH: "{{ venv_path }}/bin:{{ ansible_env.PATH }}"
+        PYTHONPATH: "{{ venv_path }}/lib/python3/dist-packages:{{ ansible_env.PYTHONPATH | default('') }}"
+        VIRTUAL_ENV: "{{ venv_path }}"
+      vars:
+        ansible_python_interpreter: "{{ venv_path }}/bin/python"
+  rescue:
+    - name: Remove local backup file of the project {{ project_name }} on failure
+      ansible.builtin.file:
+        path: "{{ backup_result.dest }}"
+        state: absent
+    - name: Fail the playbook
+      ansible.builtin.fail:
+        msg: "Failed to upload backup to OCI bucket"
 
 - name: Remove local backup file of the project {{ project_name }}
   ansible.builtin.file:
     path: "{{ backup_result.dest }}"
     state: absent
-  when: upload_result.changed 

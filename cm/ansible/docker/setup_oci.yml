@@ -1,0 +1,43 @@
+---
+# Playbook to set up OCI configuration
+
+- name: Setup OCI CLI
+  hosts: all
+  vars:
+    setup_python_env: true  # Set to false to skip Python environment setup
+    oci_config_dir: "{{ ansible_env.HOME }}/.oci"
+    oci_config_file: "{{ oci_config_dir }}/config"
+    oci_key_file: "{{ oci_config_dir }}/arcane-sanctum.pem"
+  tasks:
+    - name: Create .oci directory
+      ansible.builtin.file:
+        path: "{{ oci_config_dir }}"
+        state: directory
+        mode: '0700'
+
+    - name: Create OCI config file
+      ansible.builtin.template:
+        src: templates/oci_config.j2
+        dest: "{{ oci_config_file }}"
+        mode: '0600'
+      when: not ansible_check_mode 
+
+    - name: Create pem config file
+      ansible.builtin.template:
+        src: templates/arcane-sanctum.pem.j2
+        dest: "{{ oci_key_file }}"
+        mode: '0600'
+      when: not ansible_check_mode 
+
+    - name: Create Python virtual environment
+      ansible.builtin.command:
+        cmd: python3 -m venv {{ venv_path }}
+        creates: "{{ venv_path }}"
+      when: setup_python_env
+
+    - name: Install OCI Python SDK in virtual environment
+      ansible.builtin.pip:
+        name: oci
+        state: present
+        executable: "{{ venv_path }}/bin/pip"
+      when: setup_python_env

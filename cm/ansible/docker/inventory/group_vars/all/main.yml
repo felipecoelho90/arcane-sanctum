@@ -1,6 +1,12 @@
 ---
 # Common variables for all hosts
+data_dir_root: /mnt/docker-data
 backup_dir: /mnt/docker-data
+
+# GitHub Configuration
+github_ssh_key: ""  # Set this to your GitHub SSH private key
+github_user: ""  # Set this to your GitHub username 
+repo_branch: "main"  # Default branch to clone
 
 # Python virtual environment
 venv_path: "/opt/ansible-venv"

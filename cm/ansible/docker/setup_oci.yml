@@ -1,7 +1,6 @@
 ---
 # Playbook to set up OCI configuration
-
-- name: Setup OCI CLI
+- name: Setup OCI cli
   hosts: all
   vars:
     setup_python_env: true

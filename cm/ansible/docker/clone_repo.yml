@@ -1,0 +1,117 @@
+---
+- name: Clone GitHub Repositories
+  hosts: all
+  vars:
+    repo_key: "{{ lookup('env', 'GITHUB_SSH_KEY') | default('') }}"
+    repo_user: "{{ lookup('env', 'GITHUB_USER') | default('') }}"
+    bucket_name: "{{ oci_bucket_name }}"
+
+  tasks:
+    - name: Clone repository
+      git:
+        repo: "{{ item.github_repo_url }}"
+        dest: "{{ item.config_dir }}"
+        version: "{{ repo_branch | default('main') }}"
+        force: yes
+        update: yes
+      register: git_clone
+      loop: "{{ projects }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Gather latest backup from OCI bucket
+      oracle.oci.oci_object_storage_object_facts:
+        namespace_name: "{{ oci_namespace }}"
+        bucket_name: "{{ bucket_name }}"
+        prefix: "backups/{{ item.name }}/{{ item.name }}"
+        delimiter: "/"
+      register: oci_objects
+      loop: "{{ projects }}"
+      loop_control:
+        label: "{{ item.name }}"
+      environment:
+        PATH: "{{ venv_path }}/bin:{{ ansible_env.PATH }}"
+        PYTHONPATH: "{{ venv_path }}/lib/python3/dist-packages:{{ ansible_env.PYTHONPATH | default('') }}"
+        VIRTUAL_ENV: "{{ venv_path }}"
+      vars:
+        ansible_python_interpreter: "{{ venv_path }}/bin/python"
+
+    - name: Display latest backup found
+      debug:
+        msg: "Latest backup for {{ item.item.name }}: {{ (item.objects | selectattr('name', 'match', '.*\\.tar\\.gz$') | sort(attribute='time_created') | last).name | default('No backup found') }}"
+      loop: "{{ oci_objects.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Create docker-data root directory
+      file:
+        path: "{{ data_dir_root }}"
+        state: directory
+        mode: '0755'
+
+    - name: Check if project data directory exists
+      stat:
+        path: "{{ item.item.data_dir }}"
+      register: data_dir_stat
+      loop: "{{ oci_objects.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+        index_var: my_idx
+      when: (item.objects | selectattr('name', 'match', '.*\\.tar\\.gz$') | list | length) > 0
+
+    - name: Download latest backup
+      oracle.oci.oci_object_storage_object:
+        namespace_name: "{{ oci_namespace }}"
+        bucket_name: "{{ bucket_name }}"
+        object_name: "{{ (item.objects | selectattr('name', 'match', '.*\\.tar\\.gz$') | sort(attribute='time_created') | last).name }}"
+        dest: "{{ data_dir_root }}/{{ (item.objects | selectattr('name', 'match', '.*\\.tar\\.gz$') | sort(attribute='time_created') | last).name | regex_replace('^backups/[^/]+/', '') }}"
+      loop: "{{ oci_objects.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+        index_var: my_idx
+      when: 
+        - (item.objects | selectattr('name', 'match', '.*\\.tar\\.gz$') | list | length) > 0
+        - not data_dir_stat.results[my_idx].stat.exists
+      register: download_result
+      environment:
+        PATH: "{{ venv_path }}/bin:{{ ansible_env.PATH }}"
+        PYTHONPATH: "{{ venv_path }}/lib/python3/dist-packages:{{ ansible_env.PYTHONPATH | default('') }}"
+        VIRTUAL_ENV: "{{ venv_path }}"
+      vars:
+        ansible_python_interpreter: "{{ venv_path }}/bin/python"
+
+    - name: Decompress backup file
+      unarchive:
+        src: "{{ data_dir_root }}/{{ (item.item.objects | selectattr('name', 'match', '.*\\.tar\\.gz$') | sort(attribute='time_created') | last).name | regex_replace('^backups/[^/]+/', '') }}"
+        dest: "{{ data_dir_root }}"
+        remote_src: yes
+      loop: "{{ download_result.results }}"
+      loop_control:
+        label: "{{ item.item.item.name }}"
+      when: item.changed
+
+    - name: Remove backup archive
+      file:
+        path: "{{ data_dir_root }}/{{ (item.item.objects | selectattr('name', 'match', '.*\\.tar\\.gz$') | sort(attribute='time_created') | last).name | regex_replace('^backups/[^/]+/', '') }}"
+        state: absent
+      loop: "{{ download_result.results }}"
+      loop_control:
+        label: "{{ item.item.item.name }}"
+      when: item.changed
+
+    - name: Display backup downloaded
+      debug:
+        msg: "{{ 'Downloaded and extracted' if not data_dir_stat.results[my_idx].stat.exists else 'Data directory already exists' }} latest backup for {{ item.item.name }} to {{ item.item.data_dir }}"
+      loop: "{{ oci_objects.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+        index_var: my_idx
+      when: (item.objects | selectattr('name', 'match', '.*\\.tar\\.gz$') | list | length) > 0
+
+    - name: Start Docker Compose projects
+      community.docker.docker_compose_v2:
+        project_src: "{{ item.config_dir }}"
+        state: present
+      loop: "{{ projects }}"
+      loop_control:
+        label: "{{ item.name }}"

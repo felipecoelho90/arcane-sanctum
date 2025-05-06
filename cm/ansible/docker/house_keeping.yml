@@ -1,0 +1,42 @@
+---
+- name: Docker House Keeping
+  hosts: all
+
+  tasks:
+    - name: Pull latest Docker images
+      community.docker.docker_compose_v2:
+        project_src: "{{ item.config_dir }}"
+        pull: always
+      loop: "{{ projects }}"
+      loop_control:
+        label: "{{ item.name }}"
+      register: image_pull
+
+    - name: Display image update status
+      debug:
+        msg: "{{ 'Updated' if item.changed else 'Already up to date' }} images for {{ item.item.name }}"
+      loop: "{{ image_pull.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    - name: Restart services with new images
+      community.docker.docker_compose_v2:
+        project_src: "{{ item.item.config_dir }}"
+        state: present
+        pull: never
+      loop: "{{ image_pull.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when: item.changed
+
+    - name: Clean up old Docker images
+      community.docker.docker_prune:
+        images: yes
+        images_filters:
+          dangling: false
+          until: "{{ ansible_date_time.iso8601 }}"
+      register: prune_result
+
+    - name: Display cleanup results
+      debug:
+        msg: "Cleaned up {{ prune_result.images_deleted | default(0) }} old images, freed {{ (prune_result.images_space_reclaimed | default(0) / 1024 / 1024) | round(2) }} MB" 

@@ -5,7 +5,7 @@ projects:
     config_dir: /home/docker/git/freshrss
     data_dir: /mnt/docker-data/freshrss
     github_repo_url: "git@github.com:felipecoelho90/freshrss.git"
-  - name: pihole
-    config_dir: /home/docker/git/pihole
-    data_dir: /mnt/docker-data/pihole
-    github_repo_url: "git@github.com:felipecoelho90/pihole.git"
+  # - name: pihole
+  #   config_dir: /home/docker/git/pihole
+  #   data_dir: /mnt/docker-data/pihole
+  #   github_repo_url: "git@github.com:felipecoelho90/pihole.git"

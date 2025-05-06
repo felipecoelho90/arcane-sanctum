@@ -6,4 +6,4 @@ source .env
 set +a
 
 # Run the playbook
-ansible-playbook -i inventory/hosts.yaml setup_oci.yml 
+ansible-playbook setup_oci.yml 

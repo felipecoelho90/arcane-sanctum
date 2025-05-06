@@ -5,5 +5,5 @@ set -a
 source .env
 set +a
 
-# Run the playbook
-ansible-playbook -i inventory/hosts.yaml clone_repo.yml
+# Run the Ansible playbook
+ansible-playbook deploy.yml
